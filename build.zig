@@ -35,6 +35,7 @@ pub fn build(b: *std.Build) !void {
 
     // All our steps which we'll hook up later. The steps are shown
     // up here just so that they are more self-documenting.
+    const cli_helper_step = b.step("cli-helper", "Build CLI-only ghostty helper (no GUI runtime)");
     const libvt_step = b.step("lib-vt", "Build libghostty-vt");
     const run_step = b.step("run", "Run the app");
     const run_valgrind_step = b.step(
@@ -120,6 +121,10 @@ pub fn build(b: *std.Build) !void {
 
     // Helpgen
     if (config.emit_helpgen) deps.help_strings.install();
+
+    // cli-helper: always install the exe so CLI actions like +list-themes
+    // work even when app_runtime is .none (macOS default).
+    cli_helper_step.dependOn(&exe.install_step.step);
 
     // Runtime "none" is libghostty, anything else is an executable.
     if (config.app_runtime != .none) {

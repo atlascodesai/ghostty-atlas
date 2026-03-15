@@ -113,12 +113,21 @@ const bare_relative_path_branch =
     no_trailing_colon ++
     trailing_spaces_at_eol;
 
+// Branch 4: Bare filenames with known extensions (e.g. README.md, story.markdown).
+// These have no / prefix so they don't match Branches 2 or 3, but are common
+// in CLI output (Claude Code, git status, compiler errors, etc.).
+const bare_filename_branch =
+    \\(?<!\w)[\w][\w\-.]*\.(?:md|markdown|txt|swift|py|rs|go|js|ts|jsx|tsx|css|html|json|yaml|yml|toml|xml|csv|sh|bash|zsh|rb|c|cpp|h|hpp|java|kt|sql|graphql|proto|zig|asm|log|conf|cfg|ini|env|lock|mod|sum)(?![\w.\/])
+;
+
 pub const regex =
     scheme_url_branch ++
     "|" ++
     rooted_or_relative_path_branch ++
     "|" ++
-    bare_relative_path_branch;
+    bare_relative_path_branch ++
+    "|" ++
+    bare_filename_branch;
 
 test "url regex" {
     const testing = std.testing;
@@ -479,6 +488,31 @@ test "url regex" {
         .{
             .input = "./Downloads: Operation not permitted",
             .expect = "./Downloads",
+        },
+        // Bare filenames with known extensions (Branch 4)
+        .{
+            .input = "see README.md for details",
+            .expect = "README.md",
+        },
+        .{
+            .input = "wrote to story.md",
+            .expect = "story.md",
+        },
+        .{
+            .input = "check CHANGELOG.markdown please",
+            .expect = "CHANGELOG.markdown",
+        },
+        .{
+            .input = "edit main.swift now",
+            .expect = "main.swift",
+        },
+        .{
+            .input = "in bug-fixing.md there",
+            .expect = "bug-fixing.md",
+        },
+        .{
+            .input = "config.yaml updated",
+            .expect = "config.yaml",
         },
     };
 
